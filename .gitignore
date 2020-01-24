@@ -1,0 +1,8 @@
+
+x64/Test/vc142.idb
+.vs/*
+Debug/*
+x64/*
+Test/*
+Release/*
+Benchmark/*
