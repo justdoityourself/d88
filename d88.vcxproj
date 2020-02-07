@@ -288,6 +288,8 @@
     <ClCompile Include="d88.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="catch.hpp" />
+    <ClInclude Include="clipp.h" />
     <ClInclude Include="d88\analysis.hpp" />
     <ClInclude Include="d88\base.hpp" />
     <ClInclude Include="d88\benchmark.hpp" />
@@ -300,6 +302,15 @@
     <ClInclude Include="d88\hash.hpp" />
     <ClInclude Include="d88\test.hpp" />
     <ClInclude Include="d88\util.hpp" />
+    <ClInclude Include="mio.hpp" />
+    <ClInclude Include="num.hpp" />
+    <ClInclude Include="picobench.hpp" />
+    <ClInclude Include="picosha2.hpp" />
+    <ClInclude Include="plusaes.hpp" />
+    <ClInclude Include="ProgressBar.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
