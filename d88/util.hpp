@@ -28,6 +28,16 @@ namespace d88
         return result;
     }
 
+    template < typename T > vector<T> VXOR(vector<T>& o, vector<T>& t)
+    {
+        vector<T> result(o.size());
+
+        for (size_t i = 0; i < o.size(); i++)
+            result[i] = o[i] ^ t[i];
+
+        return result;
+    }
+
     template < typename T > vector<T> GenerateSymmetry(size_t size)
     {
         auto _sym = RandomVector<T>(size);

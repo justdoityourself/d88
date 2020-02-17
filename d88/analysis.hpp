@@ -50,13 +50,55 @@ namespace d88
 			3
 		*/
 
+		//SYMMETRY
+		/*
+			A	B	C	D
+			a	b	c	d
+
+			aD
+
+			aC + bD
+
+			aB + bC + cD
+
+			aA + bB + cC + dD
+		*/
+
+		/*template <typename T> void force(T o, T t, T l)
+		{
+			for (T i = 1; i < l; i++)
+			{
+				if (((o * i) % l) == t)
+				{
+					std::cout << i << std::endl;
+				}
+			}
+		}*/
+
+		/*DerivativeR(temp,span<T>(sym.data()+1,sym.size()-1));
+		sym[0] = temp[temp.size()-1];
+
+		for (size_t i = 0; i < data.size(); i++)
+		{
+			force<int>(poly[i], 1, 256);
+			sym[i] = GetInverse<T>(poly[i]) * sym[i];
+		}*/
+
 		template <typename T> void extract_symmetry(const span<T> & data, const span<T>& poly, const span<T>& temp, const span<T>& sym,const PascalTriangle<T> & pt)
 		{
 			ToPascal<T>(data, temp, pt);
-			ToPascalPolarR<T>(temp, sym, pt);
 
-			for (size_t i = 0; i < data.size(); i++)
-				sym[i] = GetInverse<T>(poly[i]) * sym[i];
+			T inv = GetInverse<T>(poly[data.size()-1]);
+
+			for (size_t i = 0, k = data.size() - 1; i < data.size(); k--, i++)
+			{
+				sym[i] = temp[k];
+
+				for (size_t j = 0; j < i; j++)
+					sym[i] -= sym[j] * poly[k + j];
+
+				sym[i] *= inv;
+			}
 		}
 	}
 }

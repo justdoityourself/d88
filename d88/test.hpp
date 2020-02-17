@@ -14,6 +14,8 @@
 #include "factor.hpp"
 #include "analysis.hpp"
 
+#include "../plusaes.hpp"
+
 using namespace d88;
 using namespace d88::security;
 using namespace d88::correct;
@@ -22,6 +24,46 @@ using namespace d88::analysis;
 using namespace std;
 
 
+TEST_CASE("aes reverse", "[d88::]")
+{
+    constexpr size_t S = 16;
+    typedef uint8_t U;
+
+    PascalTriangle<U> pt(S);
+
+    auto pw = GenerateSymmetry<unsigned char>(48);
+    std::vector<U> temp(S), sym(S);
+
+    std::vector<U> source = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17 };
+    std::vector<U> encrypted(S);
+
+    std::vector<U> source2 = { 17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,33 };
+    std::vector<U> encrypted2(S);
+
+    plusaes::Error e = plusaes::encrypt_cbc((unsigned char*)source.data(), (unsigned long)source.size(), pw.data(), (int)32, reinterpret_cast<unsigned char(*)[16]>((pw.data() + 32)), &encrypted[0], (unsigned long)encrypted.size(), false);
+    e = plusaes::encrypt_cbc((unsigned char*)source2.data(), (unsigned long)source2.size(), pw.data(), (int)32, reinterpret_cast<unsigned char(*)[16]>((pw.data() + 32)), &encrypted2[0], (unsigned long)encrypted2.size(), false);
+
+    auto difference = VXOR<U>(source, encrypted);
+    auto d1 = VXOR<U>(difference, encrypted);
+    auto d2 = VXOR<U>(difference, encrypted2);
+
+    REQUIRE(true == equal(source.begin(), source.end(), d1.begin()));
+    REQUIRE(true != equal(source2.begin(), source2.end(), d2.begin()));
+
+    extract_symmetry<U>(encrypted , source, temp, sym, pt);
+
+    ElectiveSymmetry<U> es(sym);
+    ToFunctionR<U>(source, temp, es);
+
+    REQUIRE(true == equal(encrypted.begin(), encrypted.end(), temp.begin()));
+
+    ToFunctionR<U>(source2, temp, es);
+
+    REQUIRE(true != equal(encrypted2.begin(), encrypted2.end(), temp.begin()));
+}
+
+//Polynomial factoring doesn't work the same way in a finite field :(
+//More to explore here.
 /*TEST_CASE("factor", "[d88::]")
 {
     typedef unsigned char T;
@@ -31,10 +73,7 @@ using namespace std;
     factor<T>(data);
 }*/
 
-//Here is where I left off, the selection of inverses seems to effect the results of the symmetry.
-//F(0) x SYM works, but F(>=1) doesnt. I think that each row will have to be computed as it's own matrix and then the inverses of each compared to find the common factor.
-//Out of time for now :( ... this is really important!
-/*TEST_CASE("analysis", "[d88::]")
+TEST_CASE("static analysis basics", "[d88::]")
 {
     typedef unsigned char T;
     static const size_t S = 4;
@@ -46,13 +85,35 @@ using namespace std;
 
     PascalTriangle<T> pt(S);
 
-    extract_symmetry<T>(data,poly,temp,sym,pt);
+    extract_symmetry<T>(data,poly, temp,sym,pt);
 
     ElectiveSymmetry<T> es(sym);
     ToFunctionR<T>(poly, temp, es);
 
     REQUIRE(true == equal(data.begin(), data.end(), temp.begin()));
-}*/
+}
+
+TEST_CASE("static analysis random", "[d88::]")
+{
+    typedef unsigned long long T;
+    static const size_t S = 128;
+
+    auto poly = RandomVector<T>(S);
+    if (poly[S - 1] % 2 == 0) poly[S - 1]++;
+
+    auto data = RandomVector<T>(S);
+    vector<T> temp(S);
+    vector<T> sym(S);
+
+    PascalTriangle<T> pt(S);
+
+    extract_symmetry<T>(data, poly, temp, sym, pt);
+
+    ElectiveSymmetry<T> es(sym);
+    ToFunctionR<T>(poly, temp, es);
+
+    REQUIRE(true == equal(data.begin(), data.end(), temp.begin()));
+}
 
 
 TEST_CASE("encrypt_long and decrypt_short pair works", "[d88::encrypt]") 

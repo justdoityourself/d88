@@ -97,6 +97,44 @@ namespace d88
         }
     }
 
+    template <typename T> void DerivativeR(const span<T>& data, const span<T>& output)
+    {
+        for (size_t i = data.size()-1, k = 0; i != 0; i--,k++)
+        {
+            output[k] = data[i - 1] - data[i];
+        }
+    }
+
+
+    template <typename T> void ExecutePascal(const span<T>& data, const span<T>& output, const PascalTriangle<T>& triangle)
+    {
+        for (size_t i = 0; i < output.size() && i < triangle.size(); i++)
+        {
+            T s = 0;
+            for (size_t j = 0; j < triangle[i].size(); j++)
+                s += triangle[i][j] * data[j];
+
+            output[i] = s;
+        }
+    }
+
+    template <typename T> void ExecutePolarPascal(const span<T>& data, const span<T>& output, const PascalTriangle<T>& triangle)
+    {
+        for (size_t i = 0; i < output.size(); i++)
+        {
+            T s = 0;
+            for (size_t j = 0; j < triangle[i].size() && j < data.size(); j++)
+            {
+                T d = ((((i % 2) && !(j % 2)) || (!(i % 2) && (j % 2))) ? -1 : 1);
+                s += triangle[i][j] * d * data[j];
+            }       
+
+            output[i] = s;
+        }
+    }
+
+
+
     template <typename T> void ToPascalR(const span<T>& data, const span<T>& output, const PascalTriangle<T>& triangle)
     {
         for (size_t i = 0,k = data.size()-1; i < data.size(); i++)
