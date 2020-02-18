@@ -49,15 +49,21 @@ using namespace clipp;
 
 int main(int argc, char* argv[])
 {
-    bool gen = false, protect = false, recover = false;
-    string in_file = "", out_file = "";
+    bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false;
+    string in_file = "", out_file = "", middle = "static", key ="password";
 
     auto cli = (
+        option("-e", "--encrypt").set(encrypt).doc("Encrypt File"),
+        option("-d", "--decrypt").set(decrypt).doc("Decrypt File"),
+        option("-s", "--static").set(_static).doc("Compute static difference"),
         option("-p", "--protect").set(protect).doc("Encode a recovery context"),
         option("-r", "--recover").set(recover).doc("Validate and recover file"),
-        option("-g", "--input").set(gen).doc("Input File"),
-        option("-i", "--input").doc("Input File") & value("Input File", in_file),
-        option("-o", "--output").doc("Output File") & value("Output File", out_file)
+        option("-g", "--gensym").set(gen).doc("Print symmetry"),
+        option("-v", "--gensol").set(solve).doc("Print solution"),
+        option("-k", "--key") & value("Password", key),
+        option("-i", "--input") & value("Input File", in_file),
+        option("-m", "--middle") & value("Intermediate File", middle),
+        option("-o", "--output") & value("Output File", out_file)
         );
 
     if (!parse(argc, argv, cli)) cout << make_man_page(cli, argv[0]);
@@ -65,12 +71,23 @@ int main(int argc, char* argv[])
     {
         if (gen)
         {
-            auto sym = d88::RandomVector<uint64_t>(512);
+            d88::api::print_sym();
+        }
+        else if (solve)
+        {
+            d88::api::print_solution();
+        }
+        else if (encrypt)
+        {
+            d88::api::default_encrypt(in_file, out_file, key);
+        }
+        else if (decrypt)
+        {
+            d88::api::default_decrypt(in_file, out_file, key);
+        }
+        else if (_static)
+        {
 
-            for (size_t i = 0; i < sym.size(); i++)
-                std::cout << sym[i] << ",";
-
-            return 0;
         }
         else if (protect)
         {

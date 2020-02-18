@@ -55,32 +55,11 @@ namespace d88
                     /*std::vector<unsigned char> decrypted(encrypted.size());
                     e = plusaes::decrypt_cbc(&encrypted[0], (unsigned long)encrypted.size(), &key[0], (int)key.size(), iv, &decrypted[0], (unsigned long)decrypted.size(), 0);
                     */
-
                 }
             }
             progressBar += s.iterations();  progressBar.display();
         }
 
-
-
-        /*template <typename T, size_t S> void encTSP(picobench::state& s)
-        {
-            auto source = RandomVector<T>(S);
-            vector<T> _pascal(S);
-            vector<T> poly(S);
-            auto pw = GenerateSymmetry<T>(S);
-            ElectiveTransform<T> et(pw);
-            static PascalTriangle<T> pt(S);
-
-            {
-                picobench::scope scope(s);
-                for (auto _ : s)
-                {
-                    ToPascalParallel<T>(source, _pascal, pt);
-                    ToPolynomialParallel<T>(_pascal, poly, et);
-                }
-            }
-        }*/
 
         template <typename T, size_t S, size_t H> void hash_long(picobench::state& s)
         {
@@ -199,9 +178,8 @@ namespace d88
 
         auto enc16kx64s = encrypt_short<unsigned long long, 2048>;
 
-        //auto enc1024x64p = encTSP<unsigned long long, 128>;
-
         PICOBENCH_SUITE("64 bytes ~block sizes ~algorithms");
+
 
         PICOBENCH(aes256x64);
 
@@ -215,6 +193,7 @@ namespace d88
         PICOBENCH(enc64x64);
         PICOBENCH(extsh64x64);
 
+
         PICOBENCH_SUITE("1024 bytes ~block sizes ~algorithms");
 
         PICOBENCH(aes256x1024);
@@ -227,8 +206,9 @@ namespace d88
         PICOBENCH(enc1024x64s);
         PICOBENCH(extsh1024x64);
 
-        //PICOBENCH(enc1024x64p);
 
+        //These tests take a while
+        //PICOBENCH(enc1024x64p);
         //PICOBENCH(aes256x16k);
         //PICOBENCH(enc16kx64s);
         /*PICOBENCH(sha16k);

@@ -26,6 +26,25 @@ using namespace d88::api;
 
 using namespace std;
 
+TEST_CASE("api encrypt/decrypt", "[d88::api]")
+{
+    std::filesystem::remove_all("testdata/encrypted");
+    std::filesystem::remove_all("testdata/decrypted");
+
+    default_encrypt("testdata/small_file", "testdata/encrypted", "TESTPASSWORD");
+    default_decrypt("testdata/encrypted", "testdata/decrypted", "TESTPASSWORD");
+
+    {
+        mio::mmap_source before("testdata/small_file");
+        mio::mmap_source after("testdata/decrypted");
+
+        CHECK(std::equal(before.begin(),before.end(),after.begin()));
+    }
+
+    std::filesystem::remove_all("testdata/encrypted");
+    std::filesystem::remove_all("testdata/decrypted");
+}
+
 TEST_CASE("api protect/recover", "[d88::api]")
 {
     std::filesystem::remove_all("testdata/output");
@@ -37,17 +56,31 @@ TEST_CASE("api protect/recover", "[d88::api]")
     {
         mio::mmap_sink file("testdata/edit");
 
-        file[file.size()-15]++;
+        file[file.size()-1500]++;
+    }
 
-        default_recover("testdata/edit", "testdata/output");
+    default_recover("testdata/edit", "testdata/output");
+
+    {
+        mio::mmap_source before("testdata/small_file");
+        mio::mmap_source after("testdata/edit");
+
+        CHECK(std::equal(before.begin(), before.end(), after.begin()));
     }
 
     {
         mio::mmap_sink file("testdata/edit");
 
         file[15]++;
+    }
 
-        default_recover("testdata/edit", "testdata/output");
+    default_recover("testdata/edit", "testdata/output");
+
+    {
+        mio::mmap_source before("testdata/small_file");
+        mio::mmap_source after("testdata/edit");
+
+        CHECK(std::equal(before.begin(), before.end(), after.begin()));
     }
 
     std::filesystem::remove_all("testdata/output");

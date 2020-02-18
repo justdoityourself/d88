@@ -192,7 +192,7 @@ namespace d88
         {
             if (!height)height = sym.size();
 
-            data.resize(height);
+            _data.resize(height);
 
             T first = sym[0];
             if (first % 2 == 0)
@@ -200,8 +200,8 @@ namespace d88
 
             for (size_t i = 0; i < height; i++)
             {
-                data[i].reserve(sym.size());
-                data[i].push_back(i % 2 ? ((T)0) - first : first);
+                _data[i].reserve(sym.size());
+                _data[i].push_back(i % 2 ? ((T)0) - first : first);
             }
 
             for (size_t i = 1; i < sym.size(); i++)
@@ -209,21 +209,23 @@ namespace d88
                 for (size_t j = 0; j < height; j++)
                 {
                     if (j == 0)
-                        data[j].push_back(sym[i]);
+                        _data[j].push_back(sym[i]);
                     else
-                        data[j].push_back((data[j - 1][i - 1] - data[j - 1][i]));
+                        _data[j].push_back((_data[j - 1][i - 1] - _data[j - 1][i]));
                 }
             }
         }
 
-        size_t size() const { return data.size(); }
-        const vector<T>& operator[](size_t dx) const { return data[dx]; }
+        size_t size() const { return _data.size(); }
+        const vector<T>& operator[](size_t dx) const { return _data[dx]; }
 
-        vector<vector<T>>& Mutate() { return data; }
-        vector<vector<T>> Duplicate() { return data; }
+        vector<vector<T>>& Mutate() { return _data; }
+        vector<vector<T>> Duplicate() { return _data; }
+
+        const vector<vector<T>>& data() const { return _data; }
 
     private:
-        vector<vector<T>> data;
+        vector<vector<T>> _data;
     };
 
     template <typename T> T GetInverse(T i)

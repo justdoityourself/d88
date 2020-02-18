@@ -446,6 +446,24 @@ namespace d88
             ElectiveSymmetry<T> es;
         };
 
+        template <typename T, size_t S, size_t E> class StaticShortContext
+        {
+        public:
+            StaticShortContext(const span<T>& sym) : es(sym, S * 2)
+            {
+                auto copy = es.Duplicate();
+                map = MapInterleaveElectiveMatrix<T, S, E>(copy);
+            }
+
+            const ElectiveSymmetry<T>& Symmetry() const { return es; }
+
+            const vector<pair<size_t, size_t>>& Map() { return map; }
+
+        private:
+            vector<pair<size_t, size_t>> map;
+            ElectiveSymmetry<T> es;
+        };
+
         template<typename T, size_t S, size_t E,size_t C=0> void immutable_extend_short(const span<T>& source, const span<T>& temp, const span<T>& dest, ImmutableShortContext<T, S, E>& ctx)
         {
             ToFunctionR<T>(source, temp, ctx.Symmetry());
