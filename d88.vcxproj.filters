@@ -83,6 +83,12 @@
     <ClInclude Include="ProgressBar.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="d88\consts.hpp">
+      <Filter>d88</Filter>
+    </ClInclude>
+    <ClInclude Include="d88\api.hpp">
+      <Filter>d88</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

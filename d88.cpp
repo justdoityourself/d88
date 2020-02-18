@@ -33,34 +33,53 @@ int main(int argc, char* argv[])
 
 
 
-#if ! defined(BENCHMARK_RUNNER) && ! defined(TEST_RUNNER)
+#if ! defined(BENCHMARK_RUNNER) && ! defined(TEST_RUNNER) && ! defined(OTHER)
 
 
 #include "clipp.h"
 
 #include <string>
+#include <array>
 #include <iostream>
+
+#include "d88/api.hpp"
 
 using namespace std;
 using namespace clipp;
 
 int main(int argc, char* argv[])
 {
-    bool encode = false, decode = false;
-    string in_file = "", out_file = "", password = "";
+    bool gen = false, protect = false, recover = false;
+    string in_file = "", out_file = "";
 
     auto cli = (
-        value("input file", in_file),
-        value("output file", out_file),
-        option("-p","--password").set(password).doc("encryption password"),
-        option("-e", "--encode").set(encode).doc("encode regenerating file"),
-        option("-d", "--decode").set(decode).doc("encode regenerating file")
+        option("-p", "--protect").set(protect).doc("Encode a recovery context"),
+        option("-r", "--recover").set(recover).doc("Validate and recover file"),
+        option("-g", "--input").set(gen).doc("Input File"),
+        option("-i", "--input").doc("Input File") & value("Input File", in_file),
+        option("-o", "--output").doc("Output File") & value("Output File", out_file)
         );
 
     if (!parse(argc, argv, cli)) cout << make_man_page(cli, argv[0]);
     else
     {
-        //Todo expose high level interface
+        if (gen)
+        {
+            auto sym = d88::RandomVector<uint64_t>(512);
+
+            for (size_t i = 0; i < sym.size(); i++)
+                std::cout << sym[i] << ",";
+
+            return 0;
+        }
+        else if (protect)
+        {
+            d88::api::default_protect(in_file, out_file);
+        }
+        else if (recover)
+        {
+            d88::api::default_recover(in_file, out_file);
+        }
     }
 
     return 0;

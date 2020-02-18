@@ -649,6 +649,33 @@ namespace d88
             return false;
         }
 
+        template <typename T, size_t S, size_t E, size_t W, size_t C> bool repair_quick2(const span<T>& source, const span<T>& temp1, const span<T>& temp2, const span<T>& ex, const span<T>& ex_temp, const span<T>& sym, ImmutableShortContext<T, S, E> &ctx)
+        {
+            for (size_t i = 0; i < S - E; i += W)
+            {
+                copy(source.begin(), source.end(), temp1.begin());
+
+                auto dx = GenerateSequence<T>(S);
+                for (size_t j = 0; j < E; j++)
+                {
+                    dx[i + j] = S + j;
+                    temp1[i + j] = ex[j];
+                }
+
+                RecoverShortContext<T, S, E> rctx(sym);
+
+                recover_short<T, S, E>(temp1, dx, rctx);
+
+                if (validate_immutable_short<T, S, E, C>(temp1, temp2, ex, ex_temp, ctx))
+                {
+                    copy(temp1.begin(), temp1.end(), source.begin());
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         void repair_all()
         {
             //Will most likely not implement this, Takes a huge amount of time to complete and is the most unlikely form of corruption.

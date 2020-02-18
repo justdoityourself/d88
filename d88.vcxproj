@@ -291,9 +291,11 @@
     <ClInclude Include="catch.hpp" />
     <ClInclude Include="clipp.h" />
     <ClInclude Include="d88\analysis.hpp" />
+    <ClInclude Include="d88\api.hpp" />
     <ClInclude Include="d88\base.hpp" />
     <ClInclude Include="d88\benchmark.hpp" />
     <ClInclude Include="d88\check.hpp" />
+    <ClInclude Include="d88\consts.hpp" />
     <ClInclude Include="d88\correct.hpp" />
     <ClInclude Include="d88\decode.hpp" />
     <ClInclude Include="d88\encode.hpp" />

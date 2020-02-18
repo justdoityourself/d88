@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <utility>
+#include <filesystem>
 
 #include "../catch.hpp"
 #include "base.hpp"
@@ -13,6 +14,7 @@
 #include "correct.hpp"
 #include "factor.hpp"
 #include "analysis.hpp"
+#include "api.hpp"
 
 #include "../plusaes.hpp"
 
@@ -20,9 +22,37 @@ using namespace d88;
 using namespace d88::security;
 using namespace d88::correct;
 using namespace d88::analysis;
+using namespace d88::api;
 
 using namespace std;
 
+TEST_CASE("api protect/recover", "[d88::api]")
+{
+    std::filesystem::remove_all("testdata/output");
+    std::filesystem::remove_all("testdata/edit");
+
+    default_protect("testdata/small_file", "testdata/output");
+    std::filesystem::copy_file("testdata/small_file", "testdata/edit");
+
+    {
+        mio::mmap_sink file("testdata/edit");
+
+        file[file.size()-15]++;
+
+        default_recover("testdata/edit", "testdata/output");
+    }
+
+    {
+        mio::mmap_sink file("testdata/edit");
+
+        file[15]++;
+
+        default_recover("testdata/edit", "testdata/output");
+    }
+
+    std::filesystem::remove_all("testdata/output");
+    std::filesystem::remove_all("testdata/edit");
+}
 
 TEST_CASE("aes reverse", "[d88::]")
 {
