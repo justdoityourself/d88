@@ -14,25 +14,10 @@
 #include "encrypt.hpp"
 #include "correct.hpp"
 #include "consts.hpp"
+#include "analysis.hpp"
 
 namespace d88::api
 {
-	void generate_static(std::string_view a, std::string_view b, std::string_view s)
-	{
-		//mio::mmap_source file(a);
-		//mio::mmap_source file(b);
-	}
-
-	void forward_static(std::string_view a, std::string_view s)
-	{
-
-	}
-
-	void reverse_static(std::string_view b, std::string_view s)
-	{
-
-	}
-
 	void allocate_file(std::string_view o, const size_t size)
 	{
 		std::ofstream ofs((string)o, std::ios::binary | std::ios::out);
@@ -45,6 +30,60 @@ namespace d88::api
 		static T t(i);
 
 		return t;
+	}
+
+	//Analysis needs to solve the INVERSE problem for the constant part of the poly before this becomes 100%, and ready for use.
+	//
+
+	void generate_static(std::string_view _a, std::string_view _b, std::string_view _s,bool parallel = true)
+	{
+		constexpr unsigned blocks = 128;
+		constexpr unsigned chunk = 1024;
+		using T = uint64_t;
+
+		PascalTriangle<T> pt(blocks);
+		vector<T> temp(blocks);
+
+		//Alignment not supported ATM, much more complicated with three files.
+		mio::mmap_source a(_a);
+		mio::mmap_source b(_b);
+
+		if (a.size() % chunk != 0)
+		{
+			std::cout << "This version requires exact block sizes and does not support padding, stay tuned. ( " << chunk << " bytes )" << std::endl;
+			return;
+		}
+
+		allocate_file(_s, a.size());
+		mio::mmap_sink result(_s);	
+
+		if (parallel)
+		{
+			std::atomic<size_t> identity = 0;
+			for_each_n(execution::par_unseq, a.data(), a.size() / chunk, [&](auto v)
+			{
+				auto i = identity++;
+
+				vector<T> temp(blocks);
+
+				d88::analysis::extract_symmetry<T>(gsl::span<T>((T*)(b.data() + i*chunk), blocks), gsl::span<T>((T*)(a.data() + i*chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i*chunk), blocks), pt);
+			});
+		}
+		else
+		{
+			for (size_t i = 0; i < a.size(); i += chunk)
+				d88::analysis::extract_symmetry<T>(gsl::span<T>((T*)(b.data() + i), blocks), gsl::span<T>((T*)(a.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + i), blocks), pt);
+		}
+	}
+
+	void forward_static(std::string_view a, std::string_view s)
+	{
+
+	}
+
+	void reverse_static(std::string_view b, std::string_view s)
+	{
+
 	}
 
 	void print_sym()
