@@ -49,7 +49,7 @@ using namespace clipp;
 
 int main(int argc, char* argv[])
 {
-    bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false;
+    bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false,compare=false;
     string in_file = "", out_file = "", middle = "static", key ="password";
 
     auto cli = (
@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
         option("-p", "--protect").set(protect).doc("Encode a recovery context"),
         option("-r", "--recover").set(recover).doc("Validate and recover file"),
         option("-g", "--gensym").set(gen).doc("Print symmetry"),
+        option("-c", "--compare").set(compare).doc("Compare Files"),
         option("-v", "--gensol").set(solve).doc("Print solution"),
         option("-k", "--key") & value("Password", key),
         option("-i", "--input") & value("Input File", in_file),
@@ -72,6 +73,13 @@ int main(int argc, char* argv[])
         if (gen)
         {
             d88::api::print_sym();
+        }
+        else if (compare)
+        {
+            if (d88::api::compare_files_bytes(in_file, out_file))
+                std::cout << "Files are the same." << std::endl;
+            else
+                std::cout << "Files are DIFFERENT! NOT THE SAME." << std::endl;
         }
         else if (solve)
         {

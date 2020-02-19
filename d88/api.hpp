@@ -18,6 +18,17 @@
 
 namespace d88::api
 {
+	bool compare_files_bytes(std::string_view o, std::string_view t)
+	{
+		auto file1 = mio::mmap_source(o);
+		auto file2 = mio::mmap_source(t);
+
+		if (file1.size() != file2.size())
+			return false;
+
+		return std::equal(file1.begin(), file1.end(), file2.begin());
+	}
+
 	void allocate_file(std::string_view o, const size_t size)
 	{
 		std::ofstream ofs((string)o, std::ios::binary | std::ios::out);
