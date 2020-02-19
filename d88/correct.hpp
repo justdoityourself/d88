@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <vector>
 #include <utility>
 
@@ -692,6 +693,59 @@ namespace d88
             }
 
             return false;
+        }
+
+        template <typename T, size_t S, size_t E, size_t C> bool repair_quick_m(const span<T>& source, const span<T>& ex, const span<T>& sym, ImmutableShortContext<T, S, E>& ctx)
+        {
+            std::atomic<bool> solved = false;
+
+            std::atomic<size_t> identity = 0;
+            for_each_n(execution::par_unseq, source.data(), S - E, [&](auto v)
+            {
+                auto i = identity++;
+
+                if (solved) return; //Exit thread As Soon As a Solution is found.
+
+                //Thread Local Storage:
+                //
+
+                std::vector<T> temp1(source.size());
+                std::vector<T> temp2(source.size());
+                std::vector<T> ex_temp(ex.size());
+
+                //Duplicated from source:
+                //
+
+                copy(source.begin(), source.end(), temp1.begin());
+
+                //Target thread(i) permutation:
+                //
+
+                auto dx = GenerateSequence<T>(S);
+                for (size_t j = 0; j < E; j++)
+                {
+                    dx[i + j] = S + j;
+                    temp1[i + j] = ex[j];
+                }
+
+                if (solved) return; //Exit thread As Soon As a Solution is found.
+
+                RecoverShortContext<T, S, E> rctx(sym);
+
+                if (solved) return; //Exit thread As Soon As a Solution is found.
+
+                recover_short<T, S, E>(temp1, dx, rctx);
+
+                if (solved) return; //Exit thread As Soon As a Solution is found.
+
+                if (validate_immutable_short<T, S, E, C>(temp1, temp2, ex, ex_temp, ctx))
+                {
+                    copy(temp1.begin(), temp1.end(), source.begin());
+                    solved = true;
+                }
+            });
+
+            return solved.load();
         }
 
         void repair_all()
