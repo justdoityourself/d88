@@ -43,7 +43,8 @@ namespace d88::api
 		return t;
 	}
 
-	//Analysis needs to solve the INVERSE problem for the constant part of the poly before this becomes 100%, and ready for use.
+	//( ) Analysis needs to solve the INVERSE problem for the constant part of the poly before this becomes 100%, and ready for use.
+	//(X) Solved with padded extract symmetry.
 	//
 
 	void generate_static(std::string_view _a, std::string_view _b, std::string_view _s,bool parallel = true)
@@ -52,8 +53,8 @@ namespace d88::api
 		constexpr unsigned chunk = 1024;
 		using T = uint64_t;
 
-		PascalTriangle<T> pt(blocks);
-		vector<T> temp(blocks);
+		PascalTriangle<T> pt(blocks+1);
+		vector<T> temp(blocks+1);
 
 		//Alignment not supported ATM, much more complicated with three files.
 		mio::mmap_source a(_a);
@@ -75,21 +76,24 @@ namespace d88::api
 			{
 				auto i = identity++;
 
-				vector<T> temp(blocks);
+				vector<T> temp(blocks+1);
 
-				d88::analysis::extract_symmetry<T>(gsl::span<T>((T*)(b.data() + i*chunk), blocks), gsl::span<T>((T*)(a.data() + i*chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i*chunk), blocks), pt);
+				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i*chunk), blocks), gsl::span<T>((T*)(a.data() + i*chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i*chunk), blocks), pt);
 			});
 		}
 		else
 		{
 			for (size_t i = 0; i < a.size(); i += chunk)
-				d88::analysis::extract_symmetry<T>(gsl::span<T>((T*)(b.data() + i), blocks), gsl::span<T>((T*)(a.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + i), blocks), pt);
+				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i), blocks), gsl::span<T>((T*)(a.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + i), blocks), pt);
 		}
 	}
 
 	void forward_static(std::string_view a, std::string_view s)
 	{
+		using T = uint64_t;
 
+		//ElectiveSymmetry<T> es(sym);
+		//ToFunctionR<T>(poly, temp, es);
 	}
 
 	void reverse_static(std::string_view b, std::string_view s)
@@ -105,6 +109,7 @@ namespace d88::api
 			std::cout << sym[i] << ",";
 	}
 
+	//This could be used for faster startup time.
 	void print_solution()
 	{
 		auto ectx = singleton_context<d88::correct::ImmutableShortContext<uint64_t, 512, 16>>(consts::default_symmetry);
@@ -119,6 +124,7 @@ namespace d88::api
 		}
 	}
 
+	//This could be used for faster startup time.
 	void print_es()
 	{
 		auto ectx = singleton_context<d88::correct::ImmutableShortContext<uint64_t, 512, 16>>(consts::default_symmetry);
@@ -146,7 +152,7 @@ namespace d88::api
 		mio::mmap_source file(i);
 		size_t rem = (file.size() % chunk);
 
-		allocate_file(o, file.size()+rem + sizeof(uint64_t));
+		allocate_file(o, (rem) ? (file.size()+rem + sizeof(uint64_t)) : file.size());
 		mio::mmap_sink result(o);
 
 		if (parallel)
@@ -180,9 +186,9 @@ namespace d88::api
 			d88::security::block_encrypt_long<T, blocks>(gsl::span<T>((T*)(tmp.data()), blocks), temp, gsl::span<T>((T*)(tout.data()), blocks), ec);
 
 			std::copy(tout.begin(), tout.end(), result.end() - (chunk + sizeof(uint64_t)));
-		}
 
-		*(uint64_t*)(result.data() + result.size() - sizeof(uint64_t)) = file.size();
+			*(uint64_t*)(result.data() + result.size() - sizeof(uint64_t)) = file.size();
+		}
 	}
 
 	void default_decrypt(std::string_view i, std::string_view o, std::string_view k, bool parallel = true)
@@ -196,7 +202,7 @@ namespace d88::api
 
 		mio::mmap_source file(i);
 
-		auto final_size = *(uint64_t*)(file.data() + file.size() - sizeof(uint64_t));
+		auto final_size = ((file.size() % chunk) ? (*(uint64_t*)(file.data() + file.size() - sizeof(uint64_t))) : file.size());
 
 		allocate_file(o, final_size);
 		mio::mmap_sink result(o);

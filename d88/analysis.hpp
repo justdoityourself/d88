@@ -64,27 +64,7 @@ namespace d88
 			aA + bB + cC + dD
 		*/
 
-		/*template <typename T> void force(T o, T t, T l)
-		{
-			for (T i = 1; i < l; i++)
-			{
-				if (((o * i) % l) == t)
-				{
-					std::cout << i << std::endl;
-				}
-			}
-		}*/
-
-		/*DerivativeR(temp,span<T>(sym.data()+1,sym.size()-1));
-		sym[0] = temp[temp.size()-1];
-
-		for (size_t i = 0; i < data.size(); i++)
-		{
-			force<int>(poly[i], 1, 256);
-			sym[i] = GetInverse<T>(poly[i]) * sym[i];
-		}*/
-
-		template <typename T> void extract_symmetry(const span<T> & data, const span<T>& poly, const span<T>& temp, const span<T>& sym,const PascalTriangle<T> & pt)
+		template <typename T, typename SHIM> void extract_symmetry(const SHIM& data, const SHIM& poly, const span<T>& temp, const span<T>& sym,const PascalTriangle<T> & pt)
 		{
 			ToPascal<T>(data, temp, pt);
 
@@ -99,6 +79,46 @@ namespace d88
 
 				sym[i] *= inv;
 			}
+		}
+
+		//This prevents the need to refactor the poly to prevent invalid inverse for the constant polynomial term for our mod (2^N).
+		//It also protects against a zero tail in the data that prevents the algorithm from working.
+		//The easiest implementation requires the data to be copied. More elaborate implementations might shim in the padding.
+		//At scale a memcpy would start to show in benchmarking... so lets use the shim
+		//
+
+		template<typename T,size_t EX = 1, T VAL = 1> class shim_span
+		{
+		public:
+			shim_span() {}
+			template <typename I> shim_span(const I & i) : s((T*)i.data()), l(i.size()) { }
+			shim_span(T* _s, size_t _l) : s(_s), l(_l) { }
+
+			//We can't provide this because of the spoofing:
+			//
+
+			//const T* begin() const { return s; }
+			//const T* end() const { return s+l; }
+
+			//T* data() { return s; } 
+			size_t size() const { return l + EX; }
+
+			const T& operator[] (size_t dx) const
+			{
+				return (dx >= l) ? VAL : *(s + dx);
+			}
+
+		private:
+			T* s = nullptr;
+			size_t l = 0;
+		};
+
+		//temp BUFFER must be data.size()+1, pt must be data.size()+1:
+		//
+
+		template <typename T> void padded_symmetry(const span<T>& data, const span<T>& poly, const span<T>& temp, const span<T>& sym, const PascalTriangle<T>& pt)
+		{
+			extract_symmetry<T>(shim_span<T>(data), shim_span<T>(poly), temp, sym, pt);
 		}
 	}
 }

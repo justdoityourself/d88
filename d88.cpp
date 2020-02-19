@@ -49,11 +49,13 @@ using namespace clipp;
 
 int main(int argc, char* argv[])
 {
-    bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false,compare=false;
+    bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false,compare=false,reverse_static=false,forward_static=false;
     string in_file = "", out_file = "", middle = "static", key ="password";
 
     auto cli = (
         option("-e", "--encrypt").set(encrypt).doc("Encrypt File"),
+        option("-f", "--forward").set(forward_static).doc("Execute static forward"),
+        option("-z", "--reverse").set(reverse_static).doc("Execute static reverse"),
         option("-d", "--decrypt").set(decrypt).doc("Decrypt File"),
         option("-s", "--static").set(_static).doc("Compute static difference"),
         option("-p", "--protect").set(protect).doc("Encode a recovery context"),
@@ -95,7 +97,15 @@ int main(int argc, char* argv[])
         }
         else if (_static)
         {
-
+            d88::api::generate_static(in_file, out_file, middle);
+        }
+        else if (reverse_static)
+        {
+            d88::api::forward_static(in_file, out_file);
+        }
+        else if (forward_static)
+        {
+            d88::api::reverse_static(in_file, out_file);
         }
         else if (protect)
         {
