@@ -105,10 +105,11 @@ namespace d88
 
 			const T& operator[] (size_t dx) const
 			{
-				return (dx >= l) ? VAL : *(s + dx);
+				return (dx >= l) ? val : *(s + dx);
 			}
 
 		private:
+			T val = VAL;
 			T* s = nullptr;
 			size_t l = 0;
 		};

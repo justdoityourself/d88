@@ -101,11 +101,11 @@ int main(int argc, char* argv[])
         }
         else if (reverse_static)
         {
-            d88::api::forward_static(in_file, out_file);
+            d88::api::forward_static(in_file, middle, out_file);
         }
         else if (forward_static)
         {
-            d88::api::reverse_static(in_file, out_file);
+            d88::api::reverse_static(in_file, middle,out_file);
         }
         else if (protect)
         {

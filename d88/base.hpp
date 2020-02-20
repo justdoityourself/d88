@@ -380,9 +380,9 @@ namespace d88
         }
     }
 
-    template<typename T> void ToFunctionR(const span<T>& polynomial, const span<T>& output, const ElectiveSymmetry<T>& es)
+    template<typename T, typename SHIM> void ToFunctionR(const SHIM& polynomial, const span<T>& output, const ElectiveSymmetry<T>& es, size_t offset = 0)
     {
-        for (size_t i = es.size() - output.size(), k = 0; i < es.size(); i++, k++)
+        for (size_t i = es.size() - output.size() - offset, k = 0; i < es.size() - offset; i++, k++)
         {
             T s = 0;
 

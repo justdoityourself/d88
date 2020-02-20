@@ -6,3 +6,6 @@ x64/*
 Test/*
 Release/*
 Benchmark/*
+testdata/after
+testdata/forward
+testdata/static

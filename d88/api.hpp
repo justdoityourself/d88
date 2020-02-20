@@ -43,7 +43,7 @@ namespace d88::api
 		return t;
 	}
 
-	//( ) Analysis needs to solve the INVERSE problem for the constant part of the poly before this becomes 100%, and ready for use.
+	//(?) Analysis needs to solve the INVERSE problem for the constant part of the poly before this becomes 100%, and ready for use.
 	//(X) Solved with padded extract symmetry.
 	//
 
@@ -66,37 +66,72 @@ namespace d88::api
 			return;
 		}
 
-		allocate_file(_s, a.size());
+		auto chunks = a.size() / chunk;
+
+		allocate_file(_s, a.size()+chunks*sizeof(T));
 		mio::mmap_sink result(_s);	
 
 		if (parallel)
 		{
 			std::atomic<size_t> identity = 0;
-			for_each_n(execution::par_unseq, a.data(), a.size() / chunk, [&](auto v)
+			for_each_n(execution::par_unseq, a.data(), chunks, [&](auto v)
 			{
 				auto i = identity++;
 
 				vector<T> temp(blocks+1);
 
-				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i*chunk), blocks), gsl::span<T>((T*)(a.data() + i*chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i*chunk), blocks), pt);
+				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i*chunk), blocks), gsl::span<T>((T*)(a.data() + i*chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i*(chunk+sizeof(T))), blocks+1), pt);
 			});
 		}
 		else
 		{
-			for (size_t i = 0; i < a.size(); i += chunk)
-				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i), blocks), gsl::span<T>((T*)(a.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + i), blocks), pt);
+			for (size_t i = 0, k = 0; i < a.size(); k++, i += chunk)
+				d88::analysis::padded_symmetry<T>(gsl::span<T>((T*)(b.data() + i), blocks), gsl::span<T>((T*)(a.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + i+ k* sizeof(T)), blocks+1), pt);
 		}
 	}
 
-	void forward_static(std::string_view a, std::string_view s)
+	void forward_static(std::string_view _a, std::string_view _s, std::string_view _r, bool parallel = true)
 	{
+		constexpr unsigned blocks = 128;
+		constexpr unsigned chunk = 1024;
 		using T = uint64_t;
 
-		//ElectiveSymmetry<T> es(sym);
-		//ToFunctionR<T>(poly, temp, es);
+		mio::mmap_source a(_a);
+		mio::mmap_source s(_s);
+
+		if (a.size() % chunk != 0)
+		{
+			std::cout << "This version requires exact block sizes and does not support padding, stay tuned. ( " << chunk << " bytes )" << std::endl;
+			return;
+		}
+
+		auto chunks = a.size() / chunk;
+
+		allocate_file(_r, a.size());
+		mio::mmap_sink r(_r);
+
+		if (parallel)
+		{
+			std::atomic<size_t> identity = 0;
+			for_each_n(execution::par_unseq, a.data(), chunks, [&](auto v)
+			{
+				auto i = identity++;
+
+				ElectiveSymmetry<T> es(gsl::span<T>((T*)(s.data() + i * (chunk + sizeof(T))), blocks + 1));
+				ToFunctionR<T>(d88::analysis::shim_span<T>((T*)(a.data() + i * chunk), blocks), gsl::span<T>((T*)(r.data() + i * chunk), blocks), es,1);
+			});
+		}
+		else
+		{
+			for (size_t i = 0, k = 0; i < a.size(); k++, i += chunk)
+			{
+				ElectiveSymmetry<T> es(gsl::span<T>((T*)(s.data() + i +k*sizeof(T)), blocks + 1));
+				ToFunctionR<T>(d88::analysis::shim_span<T>((T*)(a.data() + i), blocks), gsl::span<T>((T*)(r.data() + i), blocks), es,1);
+			}
+		}
 	}
 
-	void reverse_static(std::string_view b, std::string_view s)
+	void reverse_static(std::string_view _a, std::string_view _s, std::string_view _r, bool parallel = true)
 	{
 
 	}
