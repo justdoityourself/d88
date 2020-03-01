@@ -400,4 +400,128 @@ namespace d88::api
 				std::copy(tmp.begin(), tmp.begin() + rem, file.end() - rem);
 		}
 	}
+
+	template <typename B> std::vector<uint8_t> protect_block(const B& block, bool parallel = true)
+	{
+		constexpr unsigned blocks = 512;
+		constexpr unsigned rec = 14;
+		constexpr unsigned val = 2;
+		constexpr unsigned chunk = 4096;
+		using T = uint64_t;
+
+		auto ectx = singleton_context<d88::correct::ImmutableShortContext<T, blocks, rec>>(consts::default_symmetry);
+
+		vector<T> temp(blocks);
+
+		size_t rem = block.size() % chunk;
+
+		auto final_size = block.size() / chunk;
+		if (rem) final_size++;
+		final_size *= (rec + val) * sizeof(T);
+
+		std::vector result(final_size);
+
+		if (parallel)
+		{
+			std::atomic<size_t> identity = 0;
+			for_each_n(execution::par_unseq, block.data(), block.size() / chunk, [&](auto v)
+			{
+				auto i = identity++;
+				vector<T> temp(blocks);
+
+				d88::correct::immutable_extend_short<T, blocks, rec, val>(gsl::span<T>((T*)(block.data() + i * chunk), blocks), temp, gsl::span<T>((T*)(result.data() + i * (rec + val) * sizeof(T)), rec + val), ectx);
+			});
+		}
+		else
+		{
+			for (size_t i = 0, k = 0; i < block.size() - rem; k++, i += chunk)
+				d88::correct::immutable_extend_short<T, blocks, rec, val>(gsl::span<T>((T*)(block.data() + i), blocks), temp, gsl::span<T>((T*)(result.data() + k * (rec + val) * sizeof(T)), rec + val), ectx);
+		}
+
+		//Padding:
+		//
+
+		if (rem)
+		{
+			std::vector<uint8_t> tmp(chunk);
+
+			for (size_t i = 0; i < chunk; i++)
+				tmp[i] = 0;
+
+			std::copy(block.end() - rem, block.end(), tmp.begin());
+
+			d88::correct::immutable_extend_short<T, blocks, rec, val>(gsl::span<T>((T*)tmp.data(), blocks), temp, gsl::span<T>((T*)(result.end() - (rec + val) * sizeof(T)), blocks), ectx);
+		}
+
+		return result;
+	}
+
+	template <typename B, typename C> bool recover_block(const B& block, const C& check, bool parallel = true)
+	{
+		bool valid = true;
+		constexpr unsigned blocks = 512;
+		constexpr unsigned rec = 14;
+		constexpr unsigned val = 2;
+		constexpr unsigned chunk = 4096;
+		using T = uint64_t;
+		auto& sym = consts::default_symmetry;
+
+		auto ectx = singleton_context<d88::correct::ImmutableShortContext<T, blocks, rec>>(consts::default_symmetry);
+		vector<T> temp(blocks), temp2(blocks);
+		vector<T> ex_temp(rec + val);
+
+		size_t rem = block.size() % chunk;
+
+		auto do_validate_and_recover = [&](auto k, auto blk, auto ex, auto& _temp, auto& _temp2, auto& _ex_temp)
+		{
+			if (!d88::correct::validate_immutable_short<T, blocks, rec, val>(blk, _temp, ex, _ex_temp, ectx))
+			{
+				if (!d88::correct::repair_quick2<T, blocks, rec, 1, val>(blk, _temp, _temp2, ex, _ex_temp, sym, ectx))
+				{
+					valid = false;
+					return -1;
+				}
+				else
+					return 1;
+			}
+
+			return 0;
+		};
+
+		if (parallel)
+		{
+			std::atomic<size_t> identity = 0;
+			for_each_n(execution::par_unseq, block.data(), block.size() / chunk, [&](auto v)
+				{
+					auto i = identity++;
+					vector<T> temp(blocks), temp2(blocks);
+					vector<T> ex_temp(rec + val);
+
+					do_validate_and_recover(i, gsl::span<T>((T*)(block.data() + i * chunk), blocks), gsl::span<T>((T*)(check.data() + i * (rec + val) * sizeof(T)), rec + val), temp, temp2, ex_temp);
+				});
+		}
+		else
+		{
+			for (size_t i = 0, k = 0; i < block.size() - rem; i += chunk, k++)
+				do_validate_and_recover(k, gsl::span<T>((T*)(block.data() + i), blocks), gsl::span<T>((T*)(check.data() + k * (rec + val) * sizeof(T)), rec + val), temp, temp2, ex_temp);
+		}
+
+		//Padding:
+		//
+
+		if (rem)
+		{
+			std::vector<uint8_t> tmp(chunk);
+
+			for (size_t i = 0; i < chunk; i++)
+				tmp[i] = 0;
+
+			std::copy(block.end() - rem, block.end(), tmp.begin());
+
+			if (1 == do_validate_and_recover(-1, gsl::span<T>((T*)(tmp.data()), blocks), gsl::span<T>((T*)(check.data() + check.size() - (rec + val) * sizeof(T)), rec + val), temp, temp2, ex_temp))
+				std::copy(tmp.begin(), tmp.begin() + rem, block.end() - rem);
+		}
+
+		return valid;
+	}
 }
