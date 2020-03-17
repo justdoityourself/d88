@@ -12,6 +12,9 @@
 #include "util.hpp"
 #include "correct.hpp"
 
+#include "d8u/random.hpp"
+#include "scalar_t/int.hpp"
+
 namespace d88
 {
     using namespace security;
@@ -24,7 +27,7 @@ namespace d88
 
         template <size_t S> void sha256(picobench::state& s)
         {
-            auto source = RandomVector<unsigned char>(S);
+            auto source = d8u::random::Vector<unsigned char>(S);
 
             {
                 picobench::scope scope(s);
@@ -40,7 +43,7 @@ namespace d88
 
         template <size_t S> void aes256_encrypt(picobench::state& s)
         {
-            auto source = RandomVector<unsigned char>(S);
+            auto source = d8u::random::Vector<unsigned char>(S);
             auto pw = GenerateSymmetry<unsigned char>(48);
 
             {
@@ -63,7 +66,7 @@ namespace d88
 
         template <typename T, size_t S, size_t H> void hash_long(picobench::state& s)
         {
-            auto source = RandomVector<T>(S);
+            auto source = d8u::random::Vector<T>(S);
             vector<T> temp(S), dest(H);
 
             static auto sym = GenerateSymmetry<T>(S);
@@ -80,7 +83,7 @@ namespace d88
 
         template <typename T, size_t S, size_t H> void hash_short(picobench::state& s)
         {
-            auto source = RandomVector<T>(S);
+            auto source = d8u::random::Vector<T>(S);
             vector<T> dest(H);
 
             static auto sym = GenerateSymmetry<T>(S);
@@ -97,7 +100,7 @@ namespace d88
 
         template <typename T, size_t S> void encrypt_long(picobench::state& s)
         {
-            auto source = RandomVector<T>(S);
+            auto source = d8u::random::Vector<T>(S);
             vector<T> temp(S), dest(S);
 
             auto pw = GenerateSymmetry<T>(S);
@@ -115,7 +118,7 @@ namespace d88
 
         template <typename T, size_t S> void encrypt_short(picobench::state& s)
         {
-            auto source = RandomVector<T>(S);
+            auto source = d8u::random::Vector<T>(S);
             vector<T> dest(S);
 
             auto pw = GenerateSymmetry<T>(S);
@@ -132,8 +135,8 @@ namespace d88
 
         template <typename T, size_t S,size_t EX> void extend_short(picobench::state& s)
         {
-            auto data = RandomVector<T>(S);
-            auto sym = RandomVector<T>(S);
+            auto data = d8u::random::Vector<T>(S);
+            auto sym = d8u::random::Vector<T>(S);
 
             vector<T> ex(EX), temp(S);
 
@@ -170,6 +173,8 @@ namespace d88
         auto enc64x64 = encrypt_long<unsigned long long, 8>;
         auto enc1024x32 = encrypt_long<unsigned int, 256>;
         auto enc1024x64 = encrypt_long<unsigned long long, 128>;
+        auto enc1024x128 = encrypt_long<scalar_t::uintv_t<uint64_t, 4>, 32>;
+        auto enc1024x512 = encrypt_long<scalar_t::uintv_t<uint64_t, 8>, 16>;
         auto enc4096x64 = encrypt_long<unsigned long long, 512>;
         auto enc16kx64 = encrypt_long<unsigned long long, 2048>;
 
@@ -177,6 +182,10 @@ namespace d88
         auto enc1024x64s = encrypt_short<unsigned long long, 128>;
 
         auto enc16kx64s = encrypt_short<unsigned long long, 2048>;
+        auto enc16kx512s = encrypt_short<scalar_t::uintv_t<uint64_t,8>, 256>;
+
+        auto enc8kx512 = encrypt_long<scalar_t::uintv_t<uint64_t, 8>, 128>;
+        auto enc8kx64 = encrypt_long<unsigned long long, 1024>;
 
         PICOBENCH_SUITE("64 bytes ~block sizes ~algorithms");
 
@@ -201,11 +210,19 @@ namespace d88
 
         PICOBENCH(enc1024x32);
         PICOBENCH(enc1024x64);
-        PICOBENCH(enc4096x64);
+        PICOBENCH(enc1024x128);
+        PICOBENCH(enc1024x512);
+        
+       // PICOBENCH(enc4096x64);
         PICOBENCH(enc1024x32s);
         PICOBENCH(enc1024x64s);
         PICOBENCH(extsh1024x64);
 
+
+        /*PICOBENCH_SUITE("8k bytes ~block sizes ~algorithms");
+
+        PICOBENCH(enc8kx64);
+        PICOBENCH(enc8kx512);*/
 
         //These tests take a while
         //PICOBENCH(enc1024x64p);

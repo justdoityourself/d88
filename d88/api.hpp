@@ -138,7 +138,7 @@ namespace d88::api
 
 	void print_sym()
 	{
-		auto sym = d88::RandomVector<uint64_t>(512);
+		auto sym = d8u::random::Vector<uint64_t>(512);
 
 		for (size_t i = 0; i < sym.size(); i++)
 			std::cout << sym[i] << ",";
@@ -214,7 +214,7 @@ namespace d88::api
 
 		if (rem)
 		{
-			std::vector<uint8_t> tmp = RandomVector<uint8_t>(chunk), tout(chunk);
+			std::vector<uint8_t> tmp = d8u::random::Vector<uint8_t>(chunk), tout(chunk);
 
 			std::copy(file.end() - rem, file.end(), tmp.begin());
 

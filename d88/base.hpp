@@ -6,6 +6,7 @@
 #include <tuple>
 #include <string>
 
+#include <type_traits>
 #include <algorithm>
 #include <execution>
 
@@ -89,11 +90,9 @@ namespace d88
     {
         for (size_t i = 0; i < data.size(); i++)
         {
-            T s = 0;
+            output[i] = 0;
             for (size_t j = 0; j < triangle[i].size(); j++)
-                s += triangle[i][j] * data[j];
-
-            output[i] = s;
+                output[i] += triangle[i][j] * data[j];
         }
     }
 
@@ -194,14 +193,19 @@ namespace d88
 
             _data.resize(height);
 
-            T first = sym[0];
-            if (first % 2 == 0)
-                first++;
-
-            for (size_t i = 0; i < height; i++)
             {
-                _data[i].reserve(sym.size());
-                _data[i].push_back(i % 2 ? ((T)0) - first : first);
+                T first = sym[0];
+                if (first % 2 == 0)
+                    ++first;
+
+                T inv(0);
+                inv -= first;
+
+                for (size_t i = 0; i < height; i++)
+                {
+                    _data[i].reserve(sym.size());
+                    _data[i].push_back(i % 2 ? inv : first);
+                }
             }
 
             for (size_t i = 1; i < sym.size(); i++)
@@ -230,18 +234,23 @@ namespace d88
 
     template <typename T> T GetInverse(T i)
     {
-        T t = -1;
-        switch (t)
+        if constexpr(std::is_class<T>())
+            return i.MultiplicativeInverse();
+        else
         {
-        case 255:
-            return (T)get<1>(extended_gcd<unsigned short>(i, 256));
-        case 65535:
-            return (T)get<1>(extended_gcd<unsigned int>(i, 65536));
-        case 4294967295:
-            return (T)get<1>(extended_gcd<unsigned long long>(i, 4294967296));
-        default:
-            t = (T)get<1>(extended_gcd<Num>(Num(to_string(i).c_str(), 10), Num("10000000000000000", 16))).words[0];
-            return (t * i == 1) ? t : ((T)0) - t;
+            T t = -1;
+            switch (t)
+            {
+            case 255:
+                return (T)get<1>(extended_gcd<unsigned short>(i, 256));
+            case 65535:
+                return (T)get<1>(extended_gcd<unsigned int>(i, 65536));
+            case 4294967295:
+                return (T)get<1>(extended_gcd<unsigned long long>(i, 4294967296));
+            default:
+                t = (T)get<1>(extended_gcd<Num>(Num(to_string(i).c_str(), 10), Num("10000000000000000", 16))).words[0];
+                return (t * i == 1) ? t : ((T)0) - t;
+            }
         }
     }
 
@@ -260,7 +269,7 @@ namespace d88
 
             T first = sym[0];
             if (first % 2 == 0)
-                first++;
+                ++first;
 
             data.resize(sym.size());
             for (size_t i = 0; i < sym.size(); i++)
@@ -343,15 +352,15 @@ namespace d88
         {
             //todo clamp iterations based on output.size()
             for_each(execution::seq, _pascal.rbegin(), _pascal.rend(), [&](auto&& item) mutable
-                {
-                    size_t i = _pascal.size() - 1 - (&item - _pascal.data());
+            {
+                size_t i = _pascal.size() - 1 - (&item - _pascal.data());
 
-                    T s = item * et.inverse();
-                    for (size_t j = et[i].size() - 1, p = 0; j > 0; j--, p++)
-                        s += ((T)0) - (et[i][j] * output[p] * et.inverse());
+                T s = item * et.inverse();
+                for (size_t j = et[i].size() - 1, p = 0; j > 0; j--, p++)
+                    s += ((T)0) - (et[i][j] * output[p] * et.inverse());
 
-                    output[i] = s;
-                });
+                output[i] = s;
+            });
         }
         else
         {
