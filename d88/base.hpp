@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <execution>
 
+#include <atomic>
+
 #include "../gsl-lite.hpp"
 #include "../num.hpp"
 #include "../picosha2.hpp"
@@ -376,30 +378,64 @@ namespace d88
         return result;
     }
 
-    template<typename T> void ToFunction(const span<T>& polynomial, const span<T>& output,const ElectiveSymmetry<T>& es)
+    template<typename T> void ToFunction(const span<T>& polynomial, const span<T>& output,const ElectiveSymmetry<T>& es,bool P = false)
     {
-        for (size_t i = es.size()-output.size(),k=0; i < es.size(); i++,k++)
+        auto core = [&](size_t k, size_t i)
         {
-            T s = 0;
+            output[k] = 0;
 
             for (size_t j = 0, p = polynomial.size() - 1; j < polynomial.size(); j++, p--)
-                s += es[i][p] * polynomial[j];
+            {
+                if constexpr (std::is_class<T>())
+                    output[k].FMADD(es[i][p], polynomial[j]);
+                else
+                    output[k] += es[i][p] * polynomial[j];
+            }
+        };
 
-            output[k] = s;
+        if (P)
+        {
+            std::atomic<size_t> identity = 0;
+            std::for_each_n(std::execution::par, output.data(), es.size() - es.size() - output.size(), [&](auto v)
+            {
+                auto k = identity++;
+
+                core(k, es.size() - output.size() + k);
+            });
         }
+        else
+            for (size_t i = es.size() - output.size(), k = 0; i < es.size(); i++, k++)
+                core(k, i);
     }
 
-    template<typename T, typename SHIM> void ToFunctionR(const SHIM& polynomial, const span<T>& output, const ElectiveSymmetry<T>& es, size_t offset = 0)
+    template<typename T, typename SHIM> void ToFunctionR(const SHIM& polynomial, const span<T>& output, const ElectiveSymmetry<T>& es, size_t offset = 0, bool P = false)
     {
-        for (size_t i = es.size() - output.size() - offset, k = 0; i < es.size() - offset; i++, k++)
+        auto core = [&](size_t k, size_t i)
         {
-            T s = 0;
+            output[k] = 0;
 
             for (size_t j = 0; j < polynomial.size(); j++)
-                s += es[i][j] * polynomial[j];
+            {
+                if constexpr (std::is_class<T>())
+                    output[k].FMADD(es[i][j], polynomial[j]);
+                else
+                    output[k] += es[i][j] * polynomial[j];
+            }
+        };
 
-            output[k] = s;
+        if (P)
+        {
+            std::atomic<size_t> identity = 0;
+            std::for_each_n(std::execution::par, output.data(), (es.size() - offset) - (es.size() - output.size() - offset), [&](auto v)
+            {
+                auto k = identity++;
+                
+                core(k, es.size() - output.size() - offset + k);
+            });
         }
+        else
+            for (size_t i = es.size() - output.size() - offset, k = 0; i < es.size() - offset; i++, k++)
+                core(k, i);
     }
 
     template<typename T> vector<T> AsFunction(const span<T>& polynomial, const ElectiveSymmetry<T>& es)

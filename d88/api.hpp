@@ -492,13 +492,13 @@ namespace d88::api
 		{
 			std::atomic<size_t> identity = 0;
 			for_each_n(execution::par_unseq, block.data(), block.size() / chunk, [&](auto v)
-				{
-					auto i = identity++;
-					vector<T> temp(blocks), temp2(blocks);
-					vector<T> ex_temp(rec + val);
+			{
+				auto i = identity++;
+				vector<T> temp(blocks), temp2(blocks);
+				vector<T> ex_temp(rec + val);
 
-					do_validate_and_recover(i, gsl::span<T>((T*)(block.data() + i * chunk), blocks), gsl::span<T>((T*)(check.data() + i * (rec + val) * sizeof(T)), rec + val), temp, temp2, ex_temp);
-				});
+				do_validate_and_recover(i, gsl::span<T>((T*)(block.data() + i * chunk), blocks), gsl::span<T>((T*)(check.data() + i * (rec + val) * sizeof(T)), rec + val), temp, temp2, ex_temp);
+			});
 		}
 		else
 		{
