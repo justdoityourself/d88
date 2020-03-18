@@ -324,49 +324,34 @@ namespace d88
 
     template <typename T> void ToPolynomial(const span<T>& _pascal, const span<T>& output, const ElectiveTransform<T>& et)
     {
-        if (et.inverse())
+        if (et.inverse()) //is the constant term of the poly not 1
         {
             for (size_t i = 0, k = _pascal.size() - 1; i < output.size(); i++, k--)
             {
-                T s = _pascal[k] * et.inverse();
+                output[i] = _pascal[k]; output[i] *= et.inverse();
                 for (size_t j = et[i].size() - 1, p = 0; j > 0; j--, p++)
-                    s += ((T)0) - (et[i][j] * output[p] * et.inverse());
-
-                output[i] = s;
+                {
+                    if constexpr (std::is_class<T>())
+                        output[i].FM3IAD(et[i][j],output[p],et.inverse());
+                    else
+                        output[i] += ((T)0) - (et[i][j] * output[p] * et.inverse());
+                }
+                    
             }
         }
         else
         {
             for (size_t i = 0; i < output.size(); i++)
             {
-                T s = _pascal[i];
+                output[i] = _pascal[i];
                 for (size_t j = et[i].size() - 1; j > 0; j--)
-                    s += ((T)0) - (et[i][j] * output[j]);
-
-                output[i] = s;
+                {
+                    if constexpr (std::is_class<T>())
+                        output[i].FM2IAD(et[i][j], output[j]);
+                    else
+                        output[i] += ((T)0) - (et[i][j] * output[j]);
+                }
             }
-        }
-    }
-
-    template <typename T> void ToPolynomialParallel(const span<T>& _pascal, const span<T>& output, const ElectiveTransform<T>& et)
-    {
-        if (et.inverse())
-        {
-            //todo clamp iterations based on output.size()
-            for_each(execution::seq, _pascal.rbegin(), _pascal.rend(), [&](auto&& item) mutable
-            {
-                size_t i = _pascal.size() - 1 - (&item - _pascal.data());
-
-                T s = item * et.inverse();
-                for (size_t j = et[i].size() - 1, p = 0; j > 0; j--, p++)
-                    s += ((T)0) - (et[i][j] * output[p] * et.inverse());
-
-                output[i] = s;
-            });
-        }
-        else
-        {
-            throw "TODO";
         }
     }
 

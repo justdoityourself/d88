@@ -219,10 +219,10 @@ namespace d88
         PICOBENCH(extsh1024x64);
 
 
-        /*PICOBENCH_SUITE("8k bytes ~block sizes ~algorithms");
+        PICOBENCH_SUITE("8k bytes ~block sizes ~algorithms");
 
         PICOBENCH(enc8kx64);
-        PICOBENCH(enc8kx512);*/
+        PICOBENCH(enc8kx512);
 
         //These tests take a while
         //PICOBENCH(enc1024x64p);
