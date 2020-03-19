@@ -12,7 +12,7 @@ C++ Data Research Library
 
 //...
 
-//1024bit symmetric encryption:
+//8192bit symmetric encryption:
 auto key = "super secret string that will be converted into a key";
 d88::api::default_encrypt("some_file", "encrypted_file", key);
 d88::api::default_decrypt("encrypted_file", "decrypted_file", key);
