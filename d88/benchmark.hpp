@@ -182,12 +182,12 @@ namespace d88
         auto enc1024x64s = encrypt_short<unsigned long long, 128>;
 
         auto enc16kx64s = encrypt_short<unsigned long long, 2048>;
-        auto enc16kx512s = encrypt_short<scalar_t::uintv_t<uint64_t,8>, 256>;
+        auto enc16kx1024s = encrypt_short<scalar_t::uintv_t<uint64_t,8>, 128>;
 
         auto enc8kx512 = encrypt_long<scalar_t::uintv_t<uint64_t, 8>, 128>;
         auto enc8kx64 = encrypt_long<unsigned long long, 1024>;
 
-        PICOBENCH_SUITE("64 bytes ~block sizes ~algorithms");
+       /* PICOBENCH_SUITE("64 bytes ~block sizes ~algorithms");
 
 
         PICOBENCH(aes256x64);
@@ -222,12 +222,13 @@ namespace d88
         PICOBENCH_SUITE("8k bytes ~block sizes ~algorithms");
 
         PICOBENCH(enc8kx64);
-        PICOBENCH(enc8kx512);
+        PICOBENCH(enc8kx512);*/
 
         //These tests take a while
         //PICOBENCH(enc1024x64p);
         //PICOBENCH(aes256x16k);
-        //PICOBENCH(enc16kx64s);
+        PICOBENCH(enc16kx64s);
+        PICOBENCH(enc16kx1024s);
         /*PICOBENCH(sha16k);
         PICOBENCH(enc16kx64);*/
 
