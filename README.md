@@ -28,3 +28,7 @@ d88::api::default_recover("some_file", "parity_db");
 ## More Examples...
 
 ... todo custom application / configurations ...
+
+## Where to next
+
+See d88/test.hpp and d88/api.hpp to see how the library is tested and used.
