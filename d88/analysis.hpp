@@ -8,6 +8,56 @@ namespace d88
 {
 	namespace analysis
 	{
+		/*template <typename T> constexpr T _pow(T num, unsigned int pow)
+{
+	return (pow >= sizeof(unsigned int)*8) ? 0 :
+		pow == 0 ? 1 : num * _pow(num, pow-1);
+}
+
+template < typename U > std::tuple<U,U, U> TestSymbolUtilization(Memory m)
+{
+	U low = -1;
+	U high = 0;
+	U used = 0;
+
+	std::bitset<_pow(2, sizeof(U)*8)> map;
+
+	auto c = m.size()/sizeof(U);
+	U * u = m.pt<U>();
+
+	while(c--)
+	{
+		if(*u > high) high = *u;
+		if(*u < low) low = *u;
+
+		if(!map[*u])
+		{
+			used++;
+			map[*u] = 1;
+		}
+
+		u++;
+	}
+
+	return std::make_tuple(high,low,used);
+}
+
+template < typename U, typename P = uint16_t> auto TestSymbolFrequency(Memory m)
+{
+	std::array<P,_pow(2, sizeof(U)*8)> a;
+
+	std::memset(a.data(),0,a.size()*sizeof(P));
+
+	auto c = m.size()/sizeof(U);
+	U * u = m.pt<U>();
+
+	while(c--)
+		a[*u++]++;
+
+	return a;
+}*/
+
+
 		/*
 			Working Example Mod 8
 
