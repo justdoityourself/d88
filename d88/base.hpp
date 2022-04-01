@@ -88,7 +88,7 @@ namespace d88
     };
 
 
-    template <typename T, typename I, typename O> void ToPascal(const I& data, const O& output, const PascalTriangle<T>& triangle)
+    template <typename T, typename I, typename O> void ToPascal(const I& data, O& output, const PascalTriangle<T>& triangle)
     {
         for (size_t i = 0; i < data.size(); i++)
         {

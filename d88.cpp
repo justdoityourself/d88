@@ -43,12 +43,15 @@ int main(int argc, char* argv[])
 #include <iostream>
 
 #include "d88/api.hpp"
+#include "d88/factor.hpp"
 
 using namespace std;
 using namespace clipp;
 
 int main(int argc, char* argv[])
 {
+    d88::test();
+
     bool gen = false, protect = false, recover = false, _static = false, encrypt = false, decrypt = false, solve = false,compare=false,reverse_static=false,forward_static=false;
     string in_file = "", out_file = "", middle = "static", key ="password";
 
